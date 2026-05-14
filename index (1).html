@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Bridge — Mobile Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --g:#1A4A35;--g2:#3D5C4F;--bronze:#A0724A;--bronze2:#c49268;
+  --cream:#FAF7F0;--cream2:#F0EBE0;--cream3:#E8E0D0;
+  --glight:#a0c4b4;--gxlight:#e0ede8;
+  --td:#1A2E24;--tm:#4a5e56;--tl:#7a9080;--border:#d8d0c4;
+}
+body{font-family:'DM Sans',sans-serif;background:#1A1A1A;color:var(--td);font-size:14px;line-height:1.6;min-height:100vh;padding:32px 0;}
+
+/* DEVICE FRAME */
+.device-wrapper{display:flex;gap:40px;justify-content:center;align-items:flex-start;flex-wrap:wrap;padding:0 24px;}
+.device-column{display:flex;flex-direction:column;align-items:center;gap:12px;}
+.device-label{font-size:12px;color:#888;font-family:'DM Sans',sans-serif;text-transform:uppercase;letter-spacing:0.1em;}
+.device{width:375px;background:#000;border-radius:48px;padding:12px;box-shadow:0 30px 80px rgba(0,0,0,0.6);position:relative;}
+.device-screen{border-radius:38px;overflow:hidden;background:var(--cream);height:780px;overflow-y:auto;position:relative;scrollbar-width:none;}
+.device-screen::-webkit-scrollbar{display:none;}
+.device-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:34px;background:#000;border-radius:0 0 20px 20px;z-index:100;}
+.device-home{width:130px;height:5px;background:#444;border-radius:3px;margin:8px auto 0;}
+
+/* PAGE SYSTEM */
+.mpage{display:none;}
+.mpage.active{display:block;}
+
+/* MOBILE NAV */
+.mnav{background:var(--g);padding:44px 16px 12px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.mnav-logo{font-family:'DM Serif Display',serif;color:#fff;font-size:18px;}
+.mnav-right{display:flex;align-items:center;gap:10px;}
+.mnav-county{background:var(--g2);color:var(--gxlight);font-size:10px;padding:3px 8px;border-radius:4px;display:none;}
+.mnav-menu{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:4px;}
+.mnav-menu span{display:block;width:20px;height:2px;background:#fff;border-radius:2px;}
+.mnav-login{background:var(--bronze);color:#fff;font-size:11px;padding:5px 12px;border-radius:5px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+/* MOBILE DRAWER */
+.drawer{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--g);z-index:200;transform:translateX(-100%);transition:transform 0.25s ease;padding:44px 0 24px;}
+.drawer.open{transform:translateX(0);}
+.drawer-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 20px;}
+.drawer-logo{font-family:'DM Serif Display',serif;color:#fff;font-size:20px;}
+.drawer-close{background:none;border:none;color:var(--glight);font-size:22px;cursor:pointer;padding:4px;}
+.drawer-item{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;font-size:14px;color:var(--glight);cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);}
+.drawer-item:hover{background:rgba(255,255,255,0.06);color:#fff;}
+.drawer-sub{padding:8px 20px 8px 32px;font-size:12px;color:#7ab89a;cursor:pointer;background:rgba(0,0,0,0.15);}
+.drawer-sub:hover{color:#fff;}
+.drawer-sub-section{display:none;}
+.drawer-sub-section.open{display:block;}
+.drawer-section-label{font-size:10px;color:#4a8a6a;text-transform:uppercase;letter-spacing:0.08em;padding:16px 20px 4px;}
+
+/* HERO */
+.mhero{background:var(--cream);padding:24px 16px 20px;border-bottom:1px solid var(--border);}
+.mhero-headline{font-family:'DM Serif Display',serif;font-size:26px;color:var(--g);margin-bottom:8px;line-height:1.2;}
+.mhero-sub{font-size:12px;color:var(--tm);line-height:1.7;margin-bottom:18px;}
+.county-prompt{font-size:10px;color:var(--g2);font-weight:500;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;}
+.county-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.county-btn{padding:8px 14px;border-radius:6px;font-size:11px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;border:1.5px solid var(--g);background:#fff;color:var(--g);transition:all 0.15s;}
+.county-btn.active,.county-btn:hover{background:var(--g);color:var(--gxlight);}
+.msearch{display:flex;gap:8px;}
+.msearch-input{flex:1;border:1.5px solid var(--g2);border-radius:6px;padding:9px 12px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--td);background:#fff;outline:none;}
+.msearch-btn{background:var(--g);color:#fff;border:none;border-radius:6px;padding:9px 14px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;}
+
+/* TILES */
+.mtiles-section{background:var(--cream2);padding:14px 16px;border-bottom:1px solid var(--border);}
+.mtiles-label{font-size:10px;color:var(--tl);font-weight:500;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;}
+.mtiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.mtile{background:#fff;border-radius:8px;padding:12px;border:1px solid var(--border);cursor:pointer;}
+.mtile-icon{font-size:18px;color:var(--g);margin-bottom:6px;}
+.mtile-label{font-size:11px;font-weight:500;color:var(--td);margin-bottom:2px;}
+.mtile-desc{font-size:10px;color:var(--tl);}
+
+/* TRANSITION */
+.mtransition{background:var(--g2);padding:12px 16px;text-align:center;}
+.mtransition span{font-family:'DM Serif Display',serif;font-size:13px;color:var(--gxlight);}
+
+/* SECTION */
+.msection{padding:20px 16px;background:var(--cream);}
+.msection-alt{padding:20px 16px;background:var(--cream2);border-top:1px solid var(--border);}
+.msection-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;}
+.msection-title{font-family:'DM Serif Display',serif;font-size:17px;color:var(--g);}
+.msection-link{font-size:11px;color:var(--bronze);cursor:pointer;}
+
+/* CARDS */
+.mcard{background:#fff;border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:10px;cursor:pointer;}
+.mcard:last-child{margin-bottom:0;}
+.mcard-tags{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;}
+.tag{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:500;}
+.tag-type{background:var(--g);color:var(--gxlight);}
+.tag-county{background:var(--g2);color:var(--gxlight);}
+.tag-all{background:var(--cream2);color:var(--g2);border:1px solid var(--cream3);}
+.mcard-title{font-size:12px;font-weight:500;color:var(--td);margin-bottom:4px;}
+.mcard-desc{font-size:11px;color:var(--tm);margin-bottom:10px;line-height:1.5;}
+.mcard-action{display:inline-block;background:var(--bronze);color:#fff;font-size:10px;padding:5px 12px;border-radius:5px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+/* EVENTS */
+.mevent{background:#fff;border-radius:10px;border:1px solid var(--border);padding:12px;margin-bottom:8px;display:flex;gap:12px;cursor:pointer;}
+.mevent-date{background:var(--g);color:var(--gxlight);border-radius:6px;padding:6px 8px;text-align:center;min-width:40px;flex-shrink:0;}
+.mevent-month{font-size:8px;font-weight:500;text-transform:uppercase;display:block;}
+.mevent-day{font-family:'DM Serif Display',serif;font-size:18px;line-height:1;display:block;}
+.mevent-title{font-size:11px;font-weight:500;color:var(--td);margin-bottom:3px;}
+.mevent-meta{font-size:10px;color:var(--tl);line-height:1.5;}
+
+/* FEEDBACK */
+.mfeedback{background:var(--cream2);border-top:1px solid var(--border);padding:20px 16px;}
+.mfeedback h3{font-family:'DM Serif Display',serif;font-size:16px;color:var(--g);margin-bottom:4px;}
+.mfeedback p{font-size:11px;color:var(--tm);margin-bottom:12px;}
+.mfeedback-btn{width:100%;background:var(--g);color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;padding:11px;border-radius:6px;border:none;cursor:pointer;}
+
+/* FOOTER */
+mfooter{background:var(--g);padding:20px 16px 32px;display:block;}
+.mfooter-brand{font-family:'DM Serif Display',serif;color:#fff;font-size:17px;margin-bottom:4px;}
+.mfooter-tagline{color:var(--glight);font-size:11px;line-height:1.6;margin-bottom:16px;}
+.mfooter-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.mfooter-col-title{color:var(--glight);font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;}
+.mfooter-link{color:#7ab89a;font-size:11px;display:block;margin-bottom:5px;cursor:pointer;}
+.mfooter-bottom{border-top:1px solid #2d6a4f;padding-top:12px;}
+.mfooter-copy{color:#4a8a6a;font-size:10px;}
+
+/* DETAIL PAGE */
+.mdetail{padding:16px;}
+.mdetail-back{font-size:11px;color:var(--bronze);cursor:pointer;margin-bottom:14px;display:inline-block;}
+.mdetail-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--g);margin-bottom:8px;margin-top:6px;}
+.mdetail-body{font-size:12px;color:var(--tm);line-height:1.75;margin-bottom:16px;}
+.mdetail-box{background:var(--cream2);border-radius:8px;border:1px solid var(--border);padding:14px;margin-bottom:16px;}
+.mdetail-box h4{font-size:12px;font-weight:500;color:var(--g);margin-bottom:10px;}
+.mdetail-list{list-style:none;}
+.mdetail-list li{font-size:11px;color:var(--tm);padding:7px 0;border-bottom:1px solid var(--border);line-height:1.5;}
+.mdetail-list li:last-child{border-bottom:none;}
+.mdetail-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.mbtn-primary{background:var(--g);color:#fff;font-size:12px;font-family:'DM Sans',sans-serif;padding:10px 20px;border-radius:6px;border:none;cursor:pointer;flex:1;}
+.mbtn-secondary{background:#fff;color:var(--g);font-size:12px;font-family:'DM Sans',sans-serif;padding:10px 20px;border-radius:6px;border:1.5px solid var(--g);cursor:pointer;flex:1;}
+
+/* PAGE HERO */
+.mpage-hero{background:var(--g);padding:44px 16px 20px;}
+.mpage-hero-label{font-size:10px;color:var(--glight);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;}
+.mpage-hero-title{font-family:'DM Serif Display',serif;font-size:24px;color:#fff;margin-bottom:6px;}
+.mpage-hero-sub{font-size:12px;color:var(--glight);line-height:1.6;}
+
+/* BREADCRUMB */
+.mbreadcrumb{padding:10px 16px;background:var(--cream2);border-bottom:1px solid var(--border);font-size:11px;color:var(--tl);}
+.mbreadcrumb span{cursor:pointer;color:var(--bronze);}
+
+/* LOGIN */
+.mlogin{background:var(--g);min-height:780px;display:flex;align-items:center;justify-content:center;padding:24px;}
+.mlogin-card{background:#fff;border-radius:16px;padding:28px 20px;width:100%;}
+.mlogin-logo{font-family:'DM Serif Display',serif;font-size:24px;color:var(--g);margin-bottom:4px;}
+.mlogin-sub{font-size:11px;color:var(--tm);margin-bottom:24px;line-height:1.6;}
+.mlogin-label{font-size:11px;font-weight:500;color:var(--td);margin-bottom:5px;display:block;}
+.mlogin-input{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--td);background:#fff;outline:none;margin-bottom:14px;}
+.mlogin-btn{width:100%;background:var(--g);color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;padding:12px;border-radius:6px;border:none;cursor:pointer;font-weight:500;margin-bottom:10px;}
+.mlogin-btn-bronze{background:var(--bronze);}
+.mlogin-note{font-size:10px;color:var(--tl);text-align:center;margin-top:12px;line-height:1.6;}
+
+/* DASHBOARD NAV */
+.mdash-nav{background:var(--g);padding:44px 16px 12px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.mdash-logo{font-family:'DM Serif Display',serif;color:#fff;font-size:17px;}
+.mdash-user{display:flex;align-items:center;gap:8px;}
+.mdash-avatar{width:28px;height:28px;border-radius:50%;background:var(--bronze);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#fff;}
+.mdash-logout{background:rgba(255,255,255,0.12);color:var(--gxlight);font-size:10px;padding:4px 10px;border-radius:4px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.role-badge{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:500;}
+.role-counselor{background:#E8F4EA;color:#1A4A35;}
+.role-admin{background:#FDF0E8;color:#A0724A;}
+
+/* BOTTOM TAB BAR */
+.tab-bar{background:#fff;border-top:1px solid var(--border);display:flex;position:sticky;bottom:0;z-index:50;}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px;cursor:pointer;font-size:9px;color:var(--tl);gap:3px;transition:color 0.15s;}
+.tab-item.active{color:var(--g);}
+.tab-item-icon{font-size:18px;}
+
+/* DASHBOARD CONTENT */
+.mdash-content{padding:16px;}
+.welcome-card{background:var(--g);border-radius:10px;padding:16px;margin-bottom:14px;}
+.welcome-card h3{font-family:'DM Serif Display',serif;font-size:18px;color:#fff;margin-bottom:3px;}
+.welcome-card p{font-size:11px;color:var(--glight);}
+.mstat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.mstat{background:#fff;border-radius:8px;border:1px solid var(--border);padding:12px;}
+.mstat-num{font-family:'DM Serif Display',serif;font-size:24px;color:var(--g);line-height:1;margin-bottom:3px;}
+.mstat-label{font-size:10px;color:var(--tl);}
+.msection-card{background:#fff;border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:12px;}
+.msection-card-title{font-size:13px;font-weight:500;color:var(--td);margin-bottom:12px;}
+.mresource-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
+.mresource-row:last-child{border-bottom:none;}
+.mresource-name{font-size:11px;color:var(--td);}
+.mresource-tag{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:500;background:var(--g);color:var(--gxlight);}
+.msubmit-btn{width:100%;background:var(--bronze);color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;padding:12px;border-radius:8px;border:none;cursor:pointer;margin-bottom:12px;font-weight:500;}
+
+/* FORM */
+.mform-group{margin-bottom:14px;}
+.mform-label{font-size:11px;font-weight:500;color:var(--td);margin-bottom:5px;display:block;}
+.mform-input{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:9px 12px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--td);background:#fff;outline:none;}
+.mform-select{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:9px 12px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--td);background:#fff;outline:none;}
+.mform-textarea{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:9px 12px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--td);background:#fff;outline:none;resize:vertical;min-height:80px;}
+.mupload{border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;background:var(--cream);margin-bottom:14px;}
+.mupload-icon{font-size:24px;color:var(--tl);margin-bottom:6px;}
+.mupload-label{font-size:12px;color:var(--tm);margin-bottom:3px;}
+.mupload-hint{font-size:10px;color:var(--tl);}
+
+/* STATUS */
+.status{font-size:9px;padding:3px 7px;border-radius:10px;font-weight:500;}
+.status-pending{background:#FDF0E8;color:#A0724A;}
+.status-approved{background:#E8F4EA;color:#1A4A35;}
+.status-rejected{background:#FAE8E8;color:#8B3A3A;}
+
+/* QUEUE ITEM */
+.queue-card{background:#fff;border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:10px;}
+.queue-title{font-size:12px;font-weight:500;color:var(--td);margin-bottom:4px;}
+.queue-meta{font-size:10px;color:var(--tl);margin-bottom:10px;line-height:1.5;}
+.queue-actions{display:flex;gap:6px;}
+.qbtn{flex:1;padding:7px 6px;border-radius:5px;font-size:10px;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;font-weight:500;text-align:center;}
+.qbtn-approve{background:#2D6A4F;color:#fff;}
+.qbtn-revise{background:#fff;color:var(--g);border:1px solid var(--g);}
+.qbtn-reject{background:#8B3A3A;color:#fff;}
+
+.notification{background:#E8F4EA;border:1px solid #a0c4b4;border-radius:8px;padding:10px 12px;font-size:11px;color:var(--g);margin-bottom:12px;}
+.notification-warning{background:#FDF0E8;border-color:#d4a96a;color:#7a4a20;}
+</style>
+</head>
+<body>
+
+<div class="device-wrapper">
+
+<!-- ══════════════════════════════════════ -->
+<!-- DEVICE 1: PUBLIC HUB (LOGGED OUT) -->
+<!-- ══════════════════════════════════════ -->
+<div class="device-column">
+  <div class="device-label">Public Hub — Logged Out</div>
+  <div class="device">
+    <div class="device-notch"></div>
+    <div class="device-screen" id="screen1">
+
+      <!-- HOME -->
+      <div class="mpage active" id="m1-home">
+        <nav class="mnav">
+          <span class="mnav-logo">The Bridge</span>
+          <div class="mnav-right">
+            <span class="mnav-county" id="m1-county"></span>
+            <button class="mnav-login" onclick="m1goTo('m1-login')">Login</button>
+            <button class="mnav-menu" onclick="m1openDrawer()"><span></span><span></span><span></span></button>
+          </div>
+        </nav>
+
+        <!-- DRAWER -->
+        <div class="drawer" id="m1-drawer">
+          <div class="drawer-header">
+            <span class="drawer-logo">The Bridge</span>
+            <button class="drawer-close" onclick="m1closeDrawer()">✕</button>
+          </div>
+          <div class="drawer-item" onclick="m1goTo('m1-about');m1closeDrawer()">About <span>›</span></div>
+          <div class="drawer-item" onclick="m1toggleSub('m1-pathways-sub')">Pathways <span>›</span></div>
+          <div class="drawer-sub-section" id="m1-pathways-sub">
+            <div class="drawer-sub" onclick="m1goTo('m1-pathways');m1closeDrawer()">Postsecondary Pathways Guide</div>
+            <div class="drawer-sub" onclick="m1goTo('m1-pathways');m1closeDrawer()">Workforce Training Options</div>
+            <div class="drawer-sub" onclick="m1goTo('m1-pathways');m1closeDrawer()">Post-Baccalaureate Pathways</div>
+            <div class="drawer-sub" onclick="m1goTo('m1-pathways');m1closeDrawer()">Local Agency Contacts</div>
+            <div class="drawer-sub" onclick="m1goTo('m1-pathways');m1closeDrawer()">Resources by School District</div>
+          </div>
+          <div class="drawer-item" onclick="m1toggleSub('m1-resources-sub')">Resources <span>›</span></div>
+          <div class="drawer-sub-section" id="m1-resources-sub">
+            <div class="drawer-sub" onclick="m1goTo('m1-resources');m1closeDrawer()">Regional Scholarship Database</div>
+            <div class="drawer-sub" onclick="m1goTo('m1-resources');m1closeDrawer()">Student Advising Template Pack</div>
+            <div class="drawer-sub" onclick="m1goTo('m1-resources');m1closeDrawer()">CCR Templates</div>
+          </div>
+          <div class="drawer-item" onclick="m1goTo('m1-events');m1closeDrawer()">Events <span>›</span></div>
+          <div class="drawer-item" onclick="m1goTo('m1-pd');m1closeDrawer()">Professional Development <span>›</span></div>
+          <div class="drawer-item" onclick="m1goTo('m1-connect');m1closeDrawer()">Connect <span>›</span></div>
+          <div class="drawer-section-label">Your county</div>
+          <div class="drawer-item" onclick="m1selectCounty('Utah County');m1closeDrawer()">Utah County</div>
+          <div class="drawer-item" onclick="m1selectCounty('Summit County');m1closeDrawer()">Summit County</div>
+          <div class="drawer-item" onclick="m1selectCounty('Wasatch County');m1closeDrawer()">Wasatch County</div>
+        </div>
+
+        <div class="mhero">
+          <h1 class="mhero-headline">Your region. Your students. Your hub.</h1>
+          <p class="mhero-sub">One place for every resource you need to guide students from K-12 through postsecondary and beyond.</p>
+          <div class="county-prompt">Select your county</div>
+          <div class="county-btns">
+            <button class="county-btn" onclick="m1selectCounty('Utah County',this)">Utah County</button>
+            <button class="county-btn" onclick="m1selectCounty('Summit County',this)">Summit County</button>
+            <button class="county-btn" onclick="m1selectCounty('Wasatch County',this)">Wasatch County</button>
+          </div>
+          <div class="msearch">
+            <input class="msearch-input" placeholder="Search resources..."/>
+            <button class="msearch-btn">Search</button>
+          </div>
+        </div>
+
+        <div class="mtiles-section">
+          <div class="mtiles-label">Quick access</div>
+          <div class="mtiles">
+            <div class="mtile" onclick="m1goTo('m1-pathways')"><div class="mtile-icon">◎</div><div class="mtile-label">Pathway maps</div><div class="mtile-desc">K-12 to postsecondary</div></div>
+            <div class="mtile" onclick="m1goTo('m1-resources')"><div class="mtile-icon">◆</div><div class="mtile-label">Scholarships</div><div class="mtile-desc">Regional funding</div></div>
+            <div class="mtile" onclick="m1goTo('m1-resources')"><div class="mtile-icon">▪</div><div class="mtile-label">Templates</div><div class="mtile-desc">Advising tools</div></div>
+            <div class="mtile" onclick="m1goTo('m1-events')"><div class="mtile-icon">▲</div><div class="mtile-label">Events</div><div class="mtile-desc">Workshops</div></div>
+          </div>
+        </div>
+
+        <div class="mtransition"><span>Tools for every student. Resources for every counselor.</span></div>
+
+        <div class="msection">
+          <div class="msection-header"><span class="msection-title">Pathways</span><span class="msection-link" onclick="m1goTo('m1-pathways')">View all →</span></div>
+          <div class="mcard" onclick="m1goTo('m1-detail1')">
+            <div class="mcard-tags"><span class="tag tag-type">Pathway map</span><span class="tag tag-county m1-ctag">Utah County</span></div>
+            <div class="mcard-title">Postsecondary Pathways Guide</div>
+            <div class="mcard-desc">Routes from high school to UVU, U of U, and regional colleges.</div>
+            <button class="mcard-action">View</button>
+          </div>
+          <div class="mcard" onclick="m1goTo('m1-detail2')">
+            <div class="mcard-tags"><span class="tag tag-type">Template</span><span class="tag tag-all">All counties</span></div>
+            <div class="mcard-title">Student Advising Template Pack</div>
+            <div class="mcard-desc">Meeting notes, action plans, and follow-up forms for daily use.</div>
+            <button class="mcard-action">Download</button>
+          </div>
+        </div>
+
+        <div class="msection-alt">
+          <div class="msection-header"><span class="msection-title">Upcoming events</span><span class="msection-link" onclick="m1goTo('m1-events')">View all →</span></div>
+          <div class="mevent" onclick="m1goTo('m1-event1')"><div class="mevent-date"><span class="mevent-month">Jun</span><span class="mevent-day">4</span></div><div><div class="mevent-title">K-16 Alliance Counselor Conference</div><div class="mevent-meta">UVU Campus · All counties</div></div></div>
+          <div class="mevent" onclick="m1goTo('m1-event1')"><div class="mevent-date"><span class="mevent-month">Jun</span><span class="mevent-day">19</span></div><div><div class="mevent-title">Summit County Pathways Workshop</div><div class="mevent-meta">Park City · Summit County</div></div></div>
+        </div>
+
+        <div class="mfeedback">
+          <h3>Help us improve The Bridge</h3>
+          <p>Missing a resource? Found a broken link? Let us know.</p>
+          <button class="mfeedback-btn" onclick="m1goTo('m1-connect')">Submit feedback</button>
+        </div>
+
+        <mfooter>
+          <div style="background:var(--g);padding:20px 16px 40px;">
+            <div class="mfooter-brand">The Bridge</div>
+            <div class="mfooter-tagline">Mountainland Region<br>Counselors and Advisors Hub</div>
+            <div class="mfooter-cols">
+              <div><div class="mfooter-col-title">Quick links</div><span class="mfooter-link" onclick="m1goTo('m1-about')">About</span><span class="mfooter-link" onclick="m1goTo('m1-pathways')">Pathways</span><span class="mfooter-link" onclick="m1goTo('m1-resources')">Resources</span><span class="mfooter-link" onclick="m1goTo('m1-events')">Events</span></div>
+              <div><div class="mfooter-col-title">Support</div><span class="mfooter-link" onclick="m1goTo('m1-connect')">Contact us</span><span class="mfooter-link" onclick="m1goTo('m1-connect')">Submit feedback</span><span class="mfooter-link" onclick="m1goTo('m1-connect')">Report broken link</span></div>
+            </div>
+            <div class="mfooter-bottom"><div class="mfooter-copy">© 2026 The Bridge. Mountainland Region.</div></div>
+          </div>
+        </mfooter>
+      </div>
+
+      <!-- PATHWAYS PAGE -->
+      <div class="mpage" id="m1-pathways">
+        <nav class="mnav"><span class="mnav-logo" onclick="m1goTo('m1-home')">The Bridge</span><div class="mnav-right"><button class="mnav-menu" onclick="m1openDrawer()"><span></span><span></span><span></span></button></div></nav>
+        <div class="drawer" id="m1-drawer2" style="display:none;"></div>
+        <div class="mpage-hero"><div class="mpage-hero-label">Pathways</div><h1 class="mpage-hero-title">Pathway Maps and Directories</h1></div>
+        <div class="msection">
+          <div class="mcard" onclick="m1goTo('m1-detail1')"><div class="mcard-tags"><span class="tag tag-type">Pathway map</span><span class="tag tag-county m1-ctag">Utah County</span></div><div class="mcard-title">Postsecondary Pathways Guide</div><div class="mcard-desc">Routes from high school to UVU, U of U, and regional colleges.</div><button class="mcard-action">View</button></div>
+          <div class="mcard" onclick="m1goTo('m1-detail1')"><div class="mcard-tags"><span class="tag tag-type">Pathway map</span><span class="tag tag-all">All counties</span></div><div class="mcard-title">Workforce Training Options</div><div class="mcard-desc">Industry-aligned training programs across the region.</div><button class="mcard-action">View</button></div>
+          <div class="mcard" onclick="m1goTo('m1-detail1')"><div class="mcard-tags"><span class="tag tag-type">Pathway map</span><span class="tag tag-all">All counties</span></div><div class="mcard-title">Post-Baccalaureate Pathways</div><div class="mcard-desc">Graduate programs, certifications, and advanced credentials.</div><button class="mcard-action">View</button></div>
+          <div class="mcard" onclick="m1goTo('m1-detail1')"><div class="mcard-tags"><span class="tag tag-type">Directory</span><span class="tag tag-county m1-ctag">Utah County</span></div><div class="mcard-title">Local Agency Contacts</div><div class="mcard-desc">Contact pages for local agencies and districts.</div><button class="mcard-action">View</button></div>
+          <div class="mcard" onclick="m1goTo('m1-detail1')"><div class="mcard-tags"><span class="tag tag-type">Breakdown</span><span class="tag tag-county m1-ctag">Utah County</span></div><div class="mcard-title">Resources by School District</div><div class="mcard-desc">District-level filtering for quick access.</div><button class="mcard-action">View</button></div>
+        </div>
+      </div>
+
+      <!-- RESOURCES PAGE -->
+      <div class="mpage" id="m1-resources">
+        <nav class="mnav"><span class="mnav-logo" onclick="m1goTo('m1-home')">The Bridge</span><div class="mnav-right"><button class="mnav-menu" onclick="m1openDrawer()"><span></span><span></span><span></span></button></div></nav>
+        <div class="mpage-hero"><div class="mpage-hero-label">Resources</div><h1 class="mpage-hero-title">Scholarships and Templates</h1></div>
+        <div class="msection">
+          <div class="mcard" onclick="m1goTo('m1-detail2')"><div class="mcard-tags"><span class="tag tag-type">Scholarship</span><span class="tag tag-county m1-ctag">Utah County</span></div><div class="mcard-title">Regional Scholarship Database</div><div class="mcard-desc">Curated scholarships for Mountainland Region students.</div><button class="mcard-action">Browse</button></div>
+          <div class="mcard" onclick="m1goTo('m1-detail2')"><div class="mcard-tags"><span class="tag tag-type">Template</span><span class="tag tag-all">All counties</span></div><div class="mcard-title">Student Advising Template Pack</div><div class="mcard-desc">Meeting notes, action plans, and follow-up forms.</div><button class="mcard-action">Download</button></div>
+          <div class="mcard" onclick="m1goTo('m1-detail2')"><div class="mcard-tags"><span class="tag tag-type">Template</span><span class="tag tag-all">All counties</span></div><div class="mcard-title">CCR Planning Templates</div><div class="mcard-desc">Goal-setting forms and transition checklists.</div><button class="mcard-action">Download</button></div>
+        </div>
+      </div>
+
+      <!-- EVENTS PAGE -->
+      <div class="mpage" id="m1-events">
+        <nav class="mnav"><span class="mnav-logo" onclick="m1goTo('m1-home')">The Bridge</span><div class="mnav-right"><button class="mnav-menu" onclick="m1openDrawer()"><span></span><span></span><span></span></button></div></nav>
+        <div class="mpage-hero"><div class="mpage-hero-label">Events</div><h1 class="mpage-hero-title">Regional Events Calendar</h1></div>
+        <div class="msection">
+          <div class="mevent" onclick="m1goTo('m1-event1')"><div class="mevent-date"><span class="mevent-month">Jun</span><span class="mevent-day">4</span></div><div><div class="mevent-title">K-16 Alliance Counselor Conference</div><div class="mevent-meta">UVU Campus · All counties · Registration open</div></div></div>
+          <div class="mevent"><div class="mevent-date"><span class="mevent-month">Jun</span><span class="mevent-day">12</span></div><div><div class="mevent-title">Mountainland Youth Advisory Council</div><div class="mevent-meta">Virtual · All counties</div></div></div>
+          <div class="mevent"><div class="mevent-date"><span class="mevent-month">Jun</span><span class="mevent-day">19</span></div><div><div class="mevent-title">Summit County Pathways Workshop</div><div class="mevent-meta">Park City · Summit County · Limited seats</div></div></div>
+          <div class="mevent"><div class="mevent-date"><span class="mevent-month">Jul</span><span class="mevent-day">1</span></div><div><div class="mevent-title">USHE First Credential Info Session</div><div class="mevent-meta">Virtual · All counties · RSVP required</div></div></div>
+        </div>
+      </div>
+
+      <!-- PD PAGE -->
+      <div class="mpage" id="m1-pd">
+        <nav class="mnav"><span class="mnav-logo" onclick="m1goTo('m1-home')">The Bridge</span><div class="mnav-right"><button class="mnav-menu" onclick="m1openDrawer()"><span></span><span></span><span></span></button></div></nav>
+        <div class="mpage-hero"><div class="mpage-hero-label">Professional Development</div><h1 class="mpage-hero-title">Learning and Growth</h1></div>
+        <div class="msection">
+          <div class="mcard"><div class="mcard-tags"><span class="tag tag-type">Onboarding</span></div><div class="mcard-title">Onboarding for new counselors</div><div class="mcard-desc">Getting started in the Mountainland Region.</div><button class="mcard-action">View</button></div>
+          <div class="mcard"><div class="mcard-tags"><span class="tag tag-type">Training</span></div><div class="mcard-title">Training modules</div><div class="mcard-desc">CCR frameworks and postsecondary access.</div><button class="mcard-action">View</button></div>
+          <div class="mcard"><div class="mcard-tags"><span class="tag tag-type">Updates</span></div><div class="mcard-title">Updates and announcements</div><div class="mcard-desc">Latest changes from USHE and USBE.</div><button class="mcard-action">View</button></div>
+        </div>
+      </div>
+
+      <!-- ABOUT PAGE -->
+      <div class="mpage" id="m1-about">
+        <nav class="mnav"><span class="mnav-logo" onclick="m1goTo('m1-home')">The Bridge</span><div class="mnav-right"><button class="mnav-menu" onclick="m1openDrawer()"><span></span><span></span><span></span></button></div></nav>
+        <div class="mpage-hero"><div class="mpage-hero-label">About</div><h1 class="mpage-hero-title">The Bridge</h1><p class="mpage-hero-sub">Built for the middle space between secondary, postsecondary, and industry.</p></div>
+        <div class="msection">
+          <p style="font-size:12px;color:var(--tm);line-height:1.8;margin-bottom:14px;">The Bridge was developed to support counselors and advisors across Utah, Summit, and Wasatch counties. This hub is maintained by the UVU Workforce Alignment Regional Pathways position, created in 2020 through Utah legislation.</p>
+          <div style="background:var(--cream2);border-radius:8px;border:1px solid var(--border);padding:14px;">
+            <div style="font-size:11px;font-weight:500;color:var(--g);margin-bottom:8px;">Select your county</div>
+            <div class="county-btns">
+              <button class="county-btn" onclick="m1selectCounty('Utah County',this)">Utah County</button>
+              <button class="county-btn" onclick="m1selectCounty('Summit County',this)">Summit County</button>
+              <button class="county-btn" onclick="m1selectCounty('Wasatch County',this)">Wasatch County</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONNECT PAGE -->
+      <div class="mpage" id="m1-connect">
+        <nav class="mnav"><span class="mnav-logo" onclick="m1goTo('m1-home')">The Bridge</span><div class="mnav-right"><button class="mnav-menu" onclick="m1openDrawer()"><span></span><span></span><span></span></button></div></nav>
+        <div class="mpage-hero"><div class="mpage-hero-label">Connect</div><h1 class="mpage-hero-title">Collaboration and Contact</h1></div>
+        <div class="msection">
+          <div class="mcard"><div class="mcard-title" style="margin-bottom:6px;">Stefanie Adams — Regional Pathways</div><div class="mcard-desc">StefanieA@uvu.edu · 801-863-5746</div><button class="mcard-action">Contact</button></div>
+          <div class="mcard"><div class="mcard-title" style="margin-bottom:6px;">Submit feedback</div><div class="mcard-desc">Missing a resource or found a broken link?</div><button class="mcard-action">Submit</button></div>
+          <div class="mcard"><div class="mcard-title" style="margin-bottom:6px;">Regional partner contacts</div><div class="mcard-desc">K-12, postsecondary, and industry partners.</div><button class="mcard-action">View</button></div>
+        </div>
+      </div>
+
+      <!-- DETAIL PAGE 1 -->
+      <div class="mpage" id="m1-detail1">
+        <nav class="mnav"><span class="mnav-logo" onclick="m1goTo('m1-home')">The Bridge</span></nav>
+        <div class="mbreadcrumb"><span onclick="m1goTo('m1-pathways')">Pathways</span> / Postsecondary Pathways Guide</div>
+        <div class="mdetail">
+          <div class="mdetail-back" onclick="m1goTo('m1-pathways')">← Back to Pathways</div>
+          <div class="mcard-tags"><span class="tag tag-type">Pathway map</span><span class="tag tag-county m1-ctag">Utah County</span></div>
+          <h1 class="mdetail-title">Postsecondary Pathways Guide</h1>
+          <p class="mdetail-body">Routes from high school to UVU, U of U, and regional colleges and training programs across the Mountainland Region.</p>
+          <div class="mdetail-box"><h4>Pathways included</h4><ul class="mdetail-list"><li>Utah Valley University programs</li><li>Mountainland Technical College</li><li>University of Utah transfer pathways</li><li>Snow College two-year programs</li><li>Online and hybrid USHE options</li></ul></div>
+          <div class="mdetail-actions"><button class="mbtn-primary">Download PDF</button><button class="mbtn-secondary">Share</button></div>
+        </div>
+      </div>
+
+      <!-- DETAIL PAGE 2 -->
+      <div class="mpage" id="m1-detail2">
+        <nav class="mnav"><span class="mnav-logo" onclick="m1goTo('m1-home')">The Bridge</span></nav>
+        <div class="mbreadcrumb"><span onclick="m1goTo('m1-resources')">Resources</span> / Student Advising Template Pack</div>
+        <div class="mdetail">
+          <div class="mdetail-back" onclick="m1goTo('m1-resources')">← Back to Resources</div>
+          <div class="mcard-tags"><span class="tag tag-type">Template</span><span class="tag tag-all">All counties</span></div>
+          <h1 class="mdetail-title">Student Advising Template Pack</h1>
+          <p class="mdetail-body">Ready-to-use templates for daily counselor workflows. Download and use immediately.</p>
+          <div class="mdetail-box"><h4>Templates included</h4><ul class="mdetail-list"><li>Student meeting notes</li><li>Academic action plan form</li><li>Follow-up tracker</li><li>CCR planning form</li><li>Transition planning checklist</li></ul></div>
+          <div class="mdetail-actions"><button class="mbtn-primary">Download pack</button><button class="mbtn-secondary">Preview</button></div>
+        </div>
+      </div>
+
+      <!-- EVENT DETAIL -->
+      <div class="mpage" id="m1-event1">
+        <nav class="mnav"><span class="mnav-logo" onclick="m1goTo('m1-home')">The Bridge</span></nav>
+        <div class="mbreadcrumb"><span onclick="m1goTo('m1-events')">Events</span> / K-16 Alliance Conference</div>
+        <div class="mdetail">
+          <div class="mdetail-back" onclick="m1goTo('m1-events')">← Back to Events</div>
+          <div class="mcard-tags"><span class="tag tag-type">Conference</span><span class="tag tag-all">All counties</span></div>
+          <h1 class="mdetail-title">K-16 Alliance Counselor Conference</h1>
+          <div class="mdetail-box"><h4>Event details</h4><ul class="mdetail-list"><li>Date: June 4, 2026</li><li>Location: UVU Campus, Orem</li><li>Audience: All Mountainland counselors</li><li>Registration: Open, no cost</li><li>Contact: StefanieA@uvu.edu</li></ul></div>
+          <p class="mdetail-body">The annual K-16 Alliance Counselor Conference brings together counselors and CCR professionals from across the region.</p>
+          <div class="mdetail-actions"><button class="mbtn-primary">Register now</button><button class="mbtn-secondary">Add to calendar</button></div>
+        </div>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="mpage" id="m1-login">
+        <div class="mlogin">
+          <div class="mlogin-card">
+            <div class="mlogin-logo">The Bridge</div>
+            <p class="mlogin-sub">Mountainland Region Counselors and Advisors Hub. Your access level is set by your account.</p>
+            <label class="mlogin-label">Email address</label>
+            <input class="mlogin-input" type="email" placeholder="you@district.edu"/>
+            <label class="mlogin-label">Password</label>
+            <input class="mlogin-input" type="password" placeholder="••••••••"/>
+            <button class="mlogin-btn" onclick="m1goTo('m2-dashboard')">Log in as Counselor</button>
+            <button class="mlogin-btn mlogin-btn-bronze" onclick="m1goTo('m2-admin')">Log in as Admin</button>
+            <p class="mlogin-note">Contact StefanieA@uvu.edu for access requests.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="device-home"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- DEVICE 2: LOGGED IN VIEW -->
+<!-- ══════════════════════════════════════ -->
+<div class="device-column">
+  <div class="device-label">Logged In — Counselor and Admin</div>
+  <div class="device">
+    <div class="device-notch"></div>
+    <div class="device-screen" id="screen2">
+
+      <!-- COUNSELOR DASHBOARD -->
+      <div class="mpage active" id="m2-dashboard">
+        <div class="mdash-nav">
+          <span class="mdash-logo">The Bridge</span>
+          <div class="mdash-user">
+            <div class="mdash-avatar">JM</div>
+            <span class="role-badge role-counselor">Counselor</span>
+            <button class="mdash-logout" onclick="m2goTo('m2-login')">Log out</button>
+          </div>
+        </div>
+        <div class="mdash-content">
+          <div class="welcome-card">
+            <h3>Welcome back, Jamie</h3>
+            <p>Utah County · Alpine School District</p>
+          </div>
+          <div class="mstat-row">
+            <div class="mstat"><div class="mstat-num">47</div><div class="mstat-label">Resources in Utah County</div></div>
+            <div class="mstat"><div class="mstat-num">2</div><div class="mstat-label">Pending submissions</div></div>
+            <div class="mstat"><div class="mstat-num">12</div><div class="mstat-label">Saved resources</div></div>
+            <div class="mstat"><div class="mstat-num">3</div><div class="mstat-label">Upcoming events</div></div>
+          </div>
+          <button class="msubmit-btn" onclick="m2goTo('m2-submit')">+ Submit a Resource</button>
+          <div class="msection-card">
+            <div class="msection-card-title">Recent resources in Utah County</div>
+            <div class="mresource-row"><span class="mresource-name">Postsecondary Pathways Guide</span><span class="mresource-tag">Pathway</span></div>
+            <div class="mresource-row"><span class="mresource-name">Regional Scholarship Database</span><span class="mresource-tag">Scholarship</span></div>
+            <div class="mresource-row"><span class="mresource-name">Student Advising Template Pack</span><span class="mresource-tag">Template</span></div>
+            <div class="mresource-row"><span class="mresource-name">CCR Planning Forms</span><span class="mresource-tag">Template</span></div>
+          </div>
+          <div class="msection-card">
+            <div class="msection-card-title">My recent submissions</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+              <div><div style="font-size:11px;font-weight:500;color:var(--td);">Alpine Dual Enrollment Guide</div><div style="font-size:10px;color:var(--tl);">Submitted May 9</div></div>
+              <span class="status status-pending">Pending</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;">
+              <div><div style="font-size:11px;font-weight:500;color:var(--td);">First Gen Resource List</div><div style="font-size:10px;color:var(--tl);">Submitted May 3</div></div>
+              <span class="status status-pending">Pending</span>
+            </div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab-item active" onclick="m2goTo('m2-dashboard')"><span class="tab-item-icon">⊞</span>Home</div>
+          <div class="tab-item" onclick="m2goTo('m2-browse')"><span class="tab-item-icon">◎</span>Browse</div>
+          <div class="tab-item" onclick="m2goTo('m2-submit')"><span class="tab-item-icon">＋</span>Submit</div>
+          <div class="tab-item" onclick="m2goTo('m2-submissions')"><span class="tab-item-icon">◷</span>My Submissions</div>
+        </div>
+      </div>
+
+      <!-- SUBMIT FORM -->
+      <div class="mpage" id="m2-submit">
+        <div class="mdash-nav">
+          <span class="mdash-logo" onclick="m2goTo('m2-dashboard')">The Bridge</span>
+          <div class="mdash-user"><div class="mdash-avatar">JM</div><span class="role-badge role-counselor">Counselor</span></div>
+        </div>
+        <div class="mdash-content">
+          <div style="font-size:16px;font-weight:500;color:var(--g);margin-bottom:4px;font-family:'DM Serif Display',serif;">Submit a Resource</div>
+          <p style="font-size:11px;color:var(--tm);margin-bottom:14px;line-height:1.6;">Suggest a resource. It will be reviewed before going live.</p>
+          <div class="notification">Submissions are reviewed by Stefanie Adams's team. You'll be notified when approved.</div>
+          <div class="mform-group"><label class="mform-label">Resource title *</label><input class="mform-input" placeholder="e.g. Alpine Dual Enrollment Guide"/></div>
+          <div class="mform-group"><label class="mform-label">Category *</label><select class="mform-select"><option>Select category</option><option>Pathway map</option><option>Scholarship</option><option>Advising template</option><option>Workforce training</option><option>Local agency contact</option><option>Post-baccalaureate pathway</option><option>Other</option></select></div>
+          <div class="mform-group"><label class="mform-label">County *</label><select class="mform-select"><option>Utah County</option><option>Summit County</option><option>Wasatch County</option><option>All counties</option></select></div>
+          <div class="mform-group"><label class="mform-label">School district</label><select class="mform-select"><option>N/A — Regional resource</option><option>Alpine School District</option><option>Provo City School District</option><option>Nebo School District</option><option>South Summit School District</option><option>Wasatch School District</option></select></div>
+          <div class="mform-group"><label class="mform-label">Description *</label><textarea class="mform-textarea" placeholder="Briefly describe what this resource is and who it helps."></textarea></div>
+          <div class="mform-group"><label class="mform-label">External link</label><input class="mform-input" type="url" placeholder="https://"/></div>
+          <div class="mupload"><div class="mupload-icon">↑</div><div class="mupload-label">Tap to upload a file</div><div class="mupload-hint">PDF, Word, Excel. Max 20MB.</div></div>
+          <div style="display:flex;gap:8px;margin-bottom:24px;">
+            <button class="mbtn-secondary" onclick="m2goTo('m2-dashboard')">Cancel</button>
+            <button class="mbtn-primary" onclick="m2goTo('m2-submissions')">Submit for review</button>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab-item" onclick="m2goTo('m2-dashboard')"><span class="tab-item-icon">⊞</span>Home</div>
+          <div class="tab-item" onclick="m2goTo('m2-browse')"><span class="tab-item-icon">◎</span>Browse</div>
+          <div class="tab-item active"><span class="tab-item-icon">＋</span>Submit</div>
+          <div class="tab-item" onclick="m2goTo('m2-submissions')"><span class="tab-item-icon">◷</span>My Submissions</div>
+        </div>
+      </div>
+
+      <!-- MY SUBMISSIONS -->
+      <div class="mpage" id="m2-submissions">
+        <div class="mdash-nav">
+          <span class="mdash-logo" onclick="m2goTo('m2-dashboard')">The Bridge</span>
+          <div class="mdash-user"><div class="mdash-avatar">JM</div><span class="role-badge role-counselor">Counselor</span></div>
+        </div>
+        <div class="mdash-content">
+          <div style="font-size:16px;font-weight:500;color:var(--g);margin-bottom:14px;font-family:'DM Serif Display',serif;">My Submissions</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:8px;border:1px solid var(--border);padding:12px;margin-bottom:8px;">
+            <div><div style="font-size:12px;font-weight:500;color:var(--td);margin-bottom:2px;">Alpine Dual Enrollment Guide</div><div style="font-size:10px;color:var(--tl);">Pathway map · Utah County · May 9</div></div>
+            <span class="status status-pending">Pending</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:8px;border:1px solid var(--border);padding:12px;margin-bottom:8px;">
+            <div><div style="font-size:12px;font-weight:500;color:var(--td);margin-bottom:2px;">First Gen Resource List</div><div style="font-size:10px;color:var(--tl);">Template · All counties · May 3</div></div>
+            <span class="status status-pending">Pending</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:8px;border:1px solid var(--border);padding:12px;margin-bottom:8px;">
+            <div><div style="font-size:12px;font-weight:500;color:var(--td);margin-bottom:2px;">Utah County Workforce Directory</div><div style="font-size:10px;color:var(--tl);">Workforce · Utah County · Apr 22</div></div>
+            <span class="status status-approved">Approved</span>
+          </div>
+          <div style="background:#fff;border-radius:8px;border:1px solid var(--border);padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <div><div style="font-size:12px;font-weight:500;color:var(--td);">Scholarship Deadline Tracker</div><div style="font-size:10px;color:var(--tl);">Template · All counties · Apr 15</div></div>
+              <span class="status status-rejected">Needs revision</span>
+            </div>
+            <div style="font-size:10px;color:#8B3A3A;background:#FAE8E8;padding:6px 8px;border-radius:4px;">Update deadlines to 2026-27 academic year and resubmit.</div>
+          </div>
+          <button class="msubmit-btn" onclick="m2goTo('m2-submit')">+ Submit another resource</button>
+        </div>
+        <div class="tab-bar">
+          <div class="tab-item" onclick="m2goTo('m2-dashboard')"><span class="tab-item-icon">⊞</span>Home</div>
+          <div class="tab-item" onclick="m2goTo('m2-browse')"><span class="tab-item-icon">◎</span>Browse</div>
+          <div class="tab-item" onclick="m2goTo('m2-submit')"><span class="tab-item-icon">＋</span>Submit</div>
+          <div class="tab-item active"><span class="tab-item-icon">◷</span>My Submissions</div>
+        </div>
+      </div>
+
+      <!-- BROWSE HUB -->
+      <div class="mpage" id="m2-browse">
+        <div class="mdash-nav">
+          <span class="mdash-logo" onclick="m2goTo('m2-dashboard')">The Bridge</span>
+          <div class="mdash-user"><div class="mdash-avatar">JM</div><span class="role-badge role-counselor">Counselor</span></div>
+        </div>
+        <div class="mdash-content">
+          <div style="font-size:16px;font-weight:500;color:var(--g);margin-bottom:12px;font-family:'DM Serif Display',serif;">Browse Hub — Utah County</div>
+          <input class="mform-input" placeholder="Search resources..." style="margin-bottom:10px;"/>
+          <select class="mform-select" style="margin-bottom:14px;"><option>All categories</option><option>Pathway maps</option><option>Scholarships</option><option>Templates</option><option>Workforce training</option></select>
+          <div class="mcard"><div class="mcard-tags"><span class="tag tag-type">Pathway</span><span class="tag tag-county">Utah County</span></div><div class="mcard-title">Postsecondary Pathways Guide</div><div class="mcard-desc">Routes from high school to UVU and regional colleges.</div><button class="mcard-action">View</button></div>
+          <div class="mcard"><div class="mcard-tags"><span class="tag tag-type">Scholarship</span><span class="tag tag-county">Utah County</span></div><div class="mcard-title">Regional Scholarship Database</div><div class="mcard-desc">Curated scholarships for Mountainland Region students.</div><button class="mcard-action">Browse</button></div>
+          <div class="mcard"><div class="mcard-tags"><span class="tag tag-type">Template</span><span class="tag tag-all">All counties</span></div><div class="mcard-title">Student Advising Template Pack</div><div class="mcard-desc">Meeting notes, action plans, and follow-up forms.</div><button class="mcard-action">Download</button></div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab-item" onclick="m2goTo('m2-dashboard')"><span class="tab-item-icon">⊞</span>Home</div>
+          <div class="tab-item active"><span class="tab-item-icon">◎</span>Browse</div>
+          <div class="tab-item" onclick="m2goTo('m2-submit')"><span class="tab-item-icon">＋</span>Submit</div>
+          <div class="tab-item" onclick="m2goTo('m2-submissions')"><span class="tab-item-icon">◷</span>My Submissions</div>
+        </div>
+      </div>
+
+      <!-- ADMIN DASHBOARD -->
+      <div class="mpage" id="m2-admin">
+        <div class="mdash-nav">
+          <span class="mdash-logo">The Bridge</span>
+          <div class="mdash-user">
+            <div class="mdash-avatar" style="background:var(--bronze);">SA</div>
+            <span class="role-badge role-admin">Admin</span>
+            <button class="mdash-logout" onclick="m2goTo('m2-login')">Log out</button>
+          </div>
+        </div>
+        <div class="mdash-content">
+          <div class="welcome-card">
+            <h3>Admin Dashboard</h3>
+            <p>Stefanie Adams · UVU Workforce Alignment</p>
+          </div>
+          <div class="notification-warning notification">⚠ 5 submissions waiting for your review. <span style="color:var(--bronze);cursor:pointer;font-weight:500;" onclick="m2goTo('m2-queue')">Review now →</span></div>
+          <div class="mstat-row">
+            <div class="mstat"><div class="mstat-num">84</div><div class="mstat-label">Live resources</div></div>
+            <div class="mstat"><div class="mstat-num">5</div><div class="mstat-label">Pending review</div></div>
+            <div class="mstat"><div class="mstat-num">312</div><div class="mstat-label">Registered counselors</div></div>
+            <div class="mstat"><div class="mstat-num">6</div><div class="mstat-label">Upcoming events</div></div>
+          </div>
+          <div class="msection-card">
+            <div class="msection-card-title">Resources by county</div>
+            <div class="mresource-row"><span class="mresource-name">Utah County</span><span style="font-size:12px;font-weight:500;color:var(--g);">47</span></div>
+            <div class="mresource-row"><span class="mresource-name">Summit County</span><span style="font-size:12px;font-weight:500;color:var(--g);">22</span></div>
+            <div class="mresource-row"><span class="mresource-name">Wasatch County</span><span style="font-size:12px;font-weight:500;color:var(--g);">15</span></div>
+            <div class="mresource-row"><span class="mresource-name">All counties</span><span style="font-size:12px;font-weight:500;color:var(--g);">28</span></div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab-item active" onclick="m2goTo('m2-admin')"><span class="tab-item-icon">⊞</span>Dashboard</div>
+          <div class="tab-item" onclick="m2goTo('m2-queue')"><span class="tab-item-icon">◷</span>Queue</div>
+          <div class="tab-item" onclick="m2goTo('m2-manage')"><span class="tab-item-icon">◎</span>Resources</div>
+          <div class="tab-item" onclick="m2goTo('m2-events-admin')"><span class="tab-item-icon">▲</span>Events</div>
+        </div>
+      </div>
+
+      <!-- ADMIN QUEUE -->
+      <div class="mpage" id="m2-queue">
+        <div class="mdash-nav">
+          <span class="mdash-logo" onclick="m2goTo('m2-admin')">The Bridge</span>
+          <div class="mdash-user"><div class="mdash-avatar" style="background:var(--bronze);">SA</div><span class="role-badge role-admin">Admin</span></div>
+        </div>
+        <div class="mdash-content">
+          <div style="font-size:16px;font-weight:500;color:var(--g);margin-bottom:4px;font-family:'DM Serif Display',serif;">Review Queue</div>
+          <p style="font-size:11px;color:var(--tm);margin-bottom:14px;">5 submissions waiting for review.</p>
+          <div class="queue-card">
+            <div class="queue-title">Alpine Dual Enrollment Guide</div>
+            <div class="queue-meta">Jamie Morales · Alpine School District · May 9<br>Pathway map · Utah County</div>
+            <div style="display:flex;gap:4px;margin-bottom:8px;"><span class="tag tag-type">Pathway map</span><span class="tag tag-county">Utah County</span></div>
+            <div class="queue-actions"><button class="qbtn qbtn-approve">Approve</button><button class="qbtn qbtn-revise">Revise</button><button class="qbtn qbtn-reject">Reject</button></div>
+          </div>
+          <div class="queue-card">
+            <div class="queue-title">First Gen Student Resource List</div>
+            <div class="queue-meta">Jamie Morales · Alpine School District · May 3<br>Template · All counties</div>
+            <div style="display:flex;gap:4px;margin-bottom:8px;"><span class="tag tag-type">Template</span><span class="tag tag-all">All counties</span></div>
+            <div class="queue-actions"><button class="qbtn qbtn-approve">Approve</button><button class="qbtn qbtn-revise">Revise</button><button class="qbtn qbtn-reject">Reject</button></div>
+          </div>
+          <div class="queue-card">
+            <div class="queue-title">Summit County Trade Apprenticeships</div>
+            <div class="queue-meta">Kara B. · Park City School District · May 7<br>Workforce training · Summit County</div>
+            <div style="display:flex;gap:4px;margin-bottom:8px;"><span class="tag tag-type">Workforce</span><span class="tag tag-county">Summit County</span></div>
+            <div class="queue-actions"><button class="qbtn qbtn-approve">Approve</button><button class="qbtn qbtn-revise">Revise</button><button class="qbtn qbtn-reject">Reject</button></div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab-item" onclick="m2goTo('m2-admin')"><span class="tab-item-icon">⊞</span>Dashboard</div>
+          <div class="tab-item active"><span class="tab-item-icon">◷</span>Queue</div>
+          <div class="tab-item" onclick="m2goTo('m2-manage')"><span class="tab-item-icon">◎</span>Resources</div>
+          <div class="tab-item" onclick="m2goTo('m2-events-admin')"><span class="tab-item-icon">▲</span>Events</div>
+        </div>
+      </div>
+
+      <!-- MANAGE RESOURCES -->
+      <div class="mpage" id="m2-manage">
+        <div class="mdash-nav">
+          <span class="mdash-logo" onclick="m2goTo('m2-admin')">The Bridge</span>
+          <div class="mdash-user"><div class="mdash-avatar" style="background:var(--bronze);">SA</div><span class="role-badge role-admin">Admin</span></div>
+        </div>
+        <div class="mdash-content">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="font-size:16px;font-weight:500;color:var(--g);font-family:'DM Serif Display',serif;">Manage Resources</div>
+            <button style="background:var(--g);color:#fff;font-size:11px;padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;">+ Add</button>
+          </div>
+          <input class="mform-input" placeholder="Search resources..." style="margin-bottom:10px;"/>
+          <div class="mcard">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+              <div><div class="mcard-tags"><span class="tag tag-type">Pathway</span><span class="tag tag-county">Utah County</span></div><div style="font-size:12px;font-weight:500;color:var(--td);margin-top:4px;">Postsecondary Pathways Guide</div></div>
+              <span class="status status-approved">Live</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:10px;"><button style="flex:1;padding:7px;border-radius:5px;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;background:#fff;color:var(--g);border:1px solid var(--g);">Edit</button><button style="flex:1;padding:7px;border-radius:5px;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;background:#8B3A3A;color:#fff;border:none;">Unpublish</button></div>
+          </div>
+          <div class="mcard">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+              <div><div class="mcard-tags"><span class="tag tag-type">Template</span><span class="tag tag-all">All counties</span></div><div style="font-size:12px;font-weight:500;color:var(--td);margin-top:4px;">Student Advising Template Pack</div></div>
+              <span class="status status-approved">Live</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:10px;"><button style="flex:1;padding:7px;border-radius:5px;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;background:#fff;color:var(--g);border:1px solid var(--g);">Edit</button><button style="flex:1;padding:7px;border-radius:5px;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;background:#8B3A3A;color:#fff;border:none;">Unpublish</button></div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab-item" onclick="m2goTo('m2-admin')"><span class="tab-item-icon">⊞</span>Dashboard</div>
+          <div class="tab-item" onclick="m2goTo('m2-queue')"><span class="tab-item-icon">◷</span>Queue</div>
+          <div class="tab-item active"><span class="tab-item-icon">◎</span>Resources</div>
+          <div class="tab-item" onclick="m2goTo('m2-events-admin')"><span class="tab-item-icon">▲</span>Events</div>
+        </div>
+      </div>
+
+      <!-- ADMIN EVENTS -->
+      <div class="mpage" id="m2-events-admin">
+        <div class="mdash-nav">
+          <span class="mdash-logo" onclick="m2goTo('m2-admin')">The Bridge</span>
+          <div class="mdash-user"><div class="mdash-avatar" style="background:var(--bronze);">SA</div><span class="role-badge role-admin">Admin</span></div>
+        </div>
+        <div class="mdash-content">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="font-size:16px;font-weight:500;color:var(--g);font-family:'DM Serif Display',serif;">Manage Events</div>
+            <button style="background:var(--g);color:#fff;font-size:11px;padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;">+ Add</button>
+          </div>
+          <div class="mevent" style="margin-bottom:8px;">
+            <div class="mevent-date"><span class="mevent-month">Jun</span><span class="mevent-day">4</span></div>
+            <div style="flex:1;"><div class="mevent-title">K-16 Alliance Counselor Conference</div><div class="mevent-meta">UVU Campus · All counties</div><div style="display:flex;gap:6px;margin-top:8px;"><button style="flex:1;padding:6px;border-radius:5px;font-size:10px;font-family:'DM Sans',sans-serif;cursor:pointer;background:#fff;color:var(--g);border:1px solid var(--g);">Edit</button><button style="flex:1;padding:6px;border-radius:5px;font-size:10px;font-family:'DM Sans',sans-serif;cursor:pointer;background:#8B3A3A;color:#fff;border:none;">Remove</button></div></div>
+          </div>
+          <div class="mevent" style="margin-bottom:8px;">
+            <div class="mevent-date"><span class="mevent-month">Jun</span><span class="mevent-day">19</span></div>
+            <div style="flex:1;"><div class="mevent-title">Summit County Pathways Workshop</div><div class="mevent-meta">Park City · Summit County</div><div style="display:flex;gap:6px;margin-top:8px;"><button style="flex:1;padding:6px;border-radius:5px;font-size:10px;font-family:'DM Sans',sans-serif;cursor:pointer;background:#fff;color:var(--g);border:1px solid var(--g);">Edit</button><button style="flex:1;padding:6px;border-radius:5px;font-size:10px;font-family:'DM Sans',sans-serif;cursor:pointer;background:#8B3A3A;color:#fff;border:none;">Remove</button></div></div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab-item" onclick="m2goTo('m2-admin')"><span class="tab-item-icon">⊞</span>Dashboard</div>
+          <div class="tab-item" onclick="m2goTo('m2-queue')"><span class="tab-item-icon">◷</span>Queue</div>
+          <div class="tab-item" onclick="m2goTo('m2-manage')"><span class="tab-item-icon">◎</span>Resources</div>
+          <div class="tab-item active"><span class="tab-item-icon">▲</span>Events</div>
+        </div>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="mpage" id="m2-login">
+        <div class="mlogin">
+          <div class="mlogin-card">
+            <div class="mlogin-logo">The Bridge</div>
+            <p class="mlogin-sub">Mountainland Region Counselors and Advisors Hub.</p>
+            <label class="mlogin-label">Email address</label>
+            <input class="mlogin-input" type="email" placeholder="you@district.edu"/>
+            <label class="mlogin-label">Password</label>
+            <input class="mlogin-input" type="password" placeholder="••••••••"/>
+            <button class="mlogin-btn" onclick="m2goTo('m2-dashboard')">Log in as Counselor</button>
+            <button class="mlogin-btn mlogin-btn-bronze" onclick="m2goTo('m2-admin')">Log in as Admin</button>
+            <p class="mlogin-note">Contact StefanieA@uvu.edu for access requests.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="device-home"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+function m1goTo(id){
+  document.querySelectorAll('#screen1 .mpage').forEach(p=>p.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(el){el.classList.add('active');}
+  document.getElementById('screen1').scrollTop=0;
+}
+function m1openDrawer(){document.getElementById('m1-drawer').classList.add('open');}
+function m1closeDrawer(){document.getElementById('m1-drawer').classList.remove('open');}
+function m1toggleSub(id){
+  const el=document.getElementById(id);
+  el.classList.toggle('open');
+}
+function m1selectCounty(county,btn){
+  document.querySelectorAll('#screen1 .county-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const nc=document.getElementById('m1-county');
+  nc.textContent=county;
+  nc.style.display='inline-block';
+  document.querySelectorAll('.m1-ctag').forEach(t=>t.textContent=county);
+}
+
+function m2goTo(id){
+  document.querySelectorAll('#screen2 .mpage').forEach(p=>p.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(el){el.classList.add('active');}
+  document.getElementById('screen2').scrollTop=0;
+}
+</script>
+</body>
+</html>
